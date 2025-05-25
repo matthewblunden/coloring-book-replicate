@@ -9,6 +9,7 @@ export const config = {
 };
 
 export default async function handler(req, res) {
+  // Always set CORS headers
   res.setHeader('Access-Control-Allow-Origin', 'https://mattsplayground.com');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -32,37 +33,39 @@ export default async function handler(req, res) {
 
     const file = files?.image;
     if (!file) {
+      console.warn('❌ No image file found');
       return res.status(400).json({ error: 'No image file uploaded' });
     }
 
     const buffer = await readFile(file.filepath);
     const base64Image = buffer.toString('base64');
 
-    const replicateResponse = await fetch('https://api.replicate.com/v1/predictions', {
+    const replicateRes = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
-        'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
+        Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        version: 'cc2012c1d4ef86c83e4ac3b73e4ca85be047aa3d2914b12a2cc9d70de42031e0', // ControlNet Canny SDXL
+        version: 'cc2012c1d4ef86c83e4ac3b73e4ca85be047aa3d2914b12a2cc9d70de42031e0',
         input: {
           image: `data:image/jpeg;base64,${base64Image}`,
-          prompt: 'children\u2019s coloring book line art, bold uniform black outlines, no shading, white background',
+          prompt: "children's coloring book line art, bold uniform black outlines, no shading, white background",
           scale: 9,
         },
       }),
     });
 
-    const prediction = await replicateResponse.json();
+    const result = await replicateRes.json();
 
-    if (!replicateResponse.ok) {
-      return res.status(replicateResponse.status).json({ error: 'Replicate request failed', details: prediction });
+    if (!replicateRes.ok) {
+      console.error('❌ Replicate API failed:', result);
+      return res.status(replicateRes.status).json({ error: 'Replicate request failed', details: result });
     }
 
-    return res.status(200).json(prediction);
+    return res.status(200).json(result);
   } catch (err) {
-    console.error('❌ Server error:', err);
-    return res.status(500).json({ error: 'Internal server error', details: err.message });
+    console.error('❌ Unexpected server error:', err);
+    return res.status(500).json({ error: 'Internal Server Error', details: err.message });
   }
 }
