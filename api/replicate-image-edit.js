@@ -105,20 +105,16 @@ module.exports = async function handler(req, res) {
         'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-  // This is stable-diffusion img2img
-  version: "15a3689ee13b0d2616e98820eca31d4c3abcd36672df6afce5cb6feb1d66087d",
+     // This uses the QR code model which is good at creating clean black/white patterns
+body: JSON.stringify({
+  version: "9cdabf8f8a991351960c7ce2105de2909514b9b2d8da70c7a3f1c42f2db7fa1b",
   input: {
-    prompt: "simple coloring book page, black line art on white background, children's coloring book style, thick bold outlines only, no shading",
     image: `data:${mimeType};base64,${base64Image}`,
-    negative_prompt: "photo, realistic, shading, colors, gradients, complex, detailed, shadows, grayscale, hatching",
-    num_inference_steps: 30,
-    guidance_scale: 15,
-    prompt_strength: 0.9,  // High strength to override the original image
-    scheduler: "K_EULER",
-    seed: -1,
-    width: 512,
-    height: 512
+    prompt: "coloring book page, simple black outline",
+    qr_conditioning_scale: 2.0,
+    num_inference_steps: 20,
+    guidance_scale: 10,
+    negative_prompt: "complex, realistic, detailed"
   }
 }),
     });
