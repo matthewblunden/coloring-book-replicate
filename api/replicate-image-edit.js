@@ -1,5 +1,3 @@
-// /api/replicate-image-edit.js
-
 import { parse } from 'formidable';
 import { readFile } from 'fs/promises';
 import fetch from 'node-fetch';
@@ -11,11 +9,12 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-  // ✅ Proper CORS headers
+  // ✅ CORS headers for production
   res.setHeader('Access-Control-Allow-Origin', 'https://mattsplayground.com');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
+  // ✅ Preflight request
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -29,6 +28,7 @@ export default async function handler(req, res) {
 
     const file = files?.image;
     if (!file) {
+      console.warn('⚠️ No image uploaded');
       return res.status(400).json({ error: 'No image file uploaded' });
     }
 
@@ -54,7 +54,11 @@ export default async function handler(req, res) {
     const prediction = await replicateRes.json();
 
     if (!replicateRes.ok) {
-      return res.status(replicateRes.status).json({ error: 'Replicate request failed', details: prediction });
+      console.error('❌ Replicate error:', prediction);
+      return res.status(replicateRes.status).json({
+        error: 'Replicate request failed',
+        details: prediction,
+      });
     }
 
     return res.status(200).json(prediction);
