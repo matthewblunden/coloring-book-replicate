@@ -106,20 +106,19 @@ module.exports = async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-  version: 'aff48af9c68d162388d230a2ab003f68d2638d88307bdaf1c2f1ac95079c9613',
+  // This is stable-diffusion img2img
+  version: "15a3689ee13b0d2616e98820eca31d4c3abcd36672df6afce5cb6feb1d66087d",
   input: {
+    prompt: "simple coloring book page, black line art on white background, children's coloring book style, thick bold outlines only, no shading",
     image: `data:${mimeType};base64,${base64Image}`,
-    prompt: 'coloring book page, black outline drawing, simple lines',
-    num_outputs: 1,
-    image_resolution: '512',
-    preprocessor: 'Scribble',  // Scribble gives very simple line output
-    num_inference_steps: 20,
-    guidance_scale: 8,
-    scheduler: 'K_EULER_ANCESTRAL',
-    guess_mode: false,
-    control_guidance_end: 1,
-    control_guidance_start: 0,
-    negative_prompt: 'detailed, complex, shading, realistic'
+    negative_prompt: "photo, realistic, shading, colors, gradients, complex, detailed, shadows, grayscale, hatching",
+    num_inference_steps: 30,
+    guidance_scale: 15,
+    prompt_strength: 0.9,  // High strength to override the original image
+    scheduler: "K_EULER",
+    seed: -1,
+    width: 512,
+    height: 512
   }
 }),
     });
