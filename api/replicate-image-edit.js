@@ -1,17 +1,33 @@
+// api/replicate-image-edit.js
+
+const formidable = require('formidable');
+const { readFile } = require('fs/promises');
+const fetch = require('node-fetch');
+
+module.exports.config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 module.exports.default = async function handler(req, res) {
+  // ✅ Always set CORS headers first
+  res.setHeader('Access-Control-Allow-Origin', 'https://mattsplayground.com');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  // ✅ Handle preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  // ✅ Reject anything that's not POST
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   try {
-    // Set CORS headers first
-    res.setHeader('Access-Control-Allow-Origin', 'https://mattsplayground.com');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-    if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-    const formidable = require('formidable');
-    const { readFile } = require('fs/promises');
-    const fetch = require('node-fetch');
-
+    // Parse uploaded file using formidable
     const form = new formidable.IncomingForm({ multiples: false });
     const { files } = await new Promise((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
@@ -29,12 +45,6 @@ module.exports.default = async function handler(req, res) {
     const buffer = await readFile(file.filepath);
     const base64Image = buffer.toString('base64');
 
-    // Confirm token is available
-    if (!process.env.REPLICATE_API_TOKEN) {
-      console.error('❌ Missing REPLICATE_API_TOKEN in environment');
-      return res.status(500).json({ error: 'Missing API token' });
-    }
-
     const replicateRes = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
@@ -42,7 +52,7 @@ module.exports.default = async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        version: 'cc2012c1d4ef86c83e4ac3b73e4ca85be047aa3d2914b12a2cc9d70de42031e0',
+        version: 'cc2012c1d4ef86c83e4ac3b73e4ca85be047aa3d2914b12a2cc9d70de42031e0', // ControlNet Canny SDXL
         input: {
           image: `data:image/jpeg;base64,${base64Image}`,
           prompt: `children's coloring book line art, bold uniform black outlines, no shading, white background`,
@@ -52,16 +62,16 @@ module.exports.default = async function handler(req, res) {
     });
 
     const prediction = await replicateRes.json();
-    console.log('📦 Replicate Response:', prediction);
 
     if (!replicateRes.ok) {
-      console.error('❌ Replicate Error:', prediction);
-      return res.status(replicateRes.status).json({ error: 'Replicate failed', details: prediction });
+      console.error('❌ Replicate API error:', prediction);
+      return res.status(replicateRes.status).json({ error: 'Replicate request failed', details: prediction });
     }
 
     return res.status(200).json(prediction);
+
   } catch (err) {
-    console.error('❌ Top-level crash:', err);
+    console.error('❌ Server error:', err);
     return res.status(500).json({ error: 'Internal server error', details: err.message });
   }
 };
