@@ -1,13 +1,17 @@
 {
   "name": "coloring-book-api",
   "version": "1.0.0",
-  "private": true,
+  "description": "Image upload and Replicate API handler for coloring book generation",
+  "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "vercel dev"
+    "dev": "vercel dev",
+    "build": "echo 'No build step needed'",
+    "start": "vercel dev"
   },
   "dependencies": {
     "formidable": "^3.5.0",
     "node-fetch": "^3.3.2"
-  }
+  },
+  "license": "MIT"
 }
