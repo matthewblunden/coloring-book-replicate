@@ -106,22 +106,26 @@ module.exports = async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        version: 'aff48af9c68d162388d230a2ab003f68d2638d88307bdaf1c2f1ac95079c9613',
-        input: {
-          image: `data:${mimeType};base64,${base64Image}`,
-          prompt: 'coloring book outline, black lines only, no fill, no shading, simple line art for children',
-          num_outputs: 1,
-          image_resolution: '512',
-          preprocessor: 'Canny',
-          num_inference_steps: 20,
-          guidance_scale: 9,
-          scheduler: 'K_EULER_ANCESTRAL',
-          guess_mode: false,
-          control_guidance_end: 1,
-          control_guidance_start: 0,
-          negative_prompt: 'shading, colors, filled areas, gradients, complex details'
-        },
-      }),
+  version: 'aff48af9c68d162388d230a2ab003f68d2638d88307bdaf1c2f1ac95079c9613',
+  input: {
+    image: `data:${mimeType};base64,${base64Image}`,
+    prompt: 'simple coloring book page, bold black outlines only, no shading, no hatching, no fill, clean line art for children coloring book, thick lines',
+    num_outputs: 1,
+    image_resolution: '512',
+    preprocessor: 'Canny',
+    num_inference_steps: 30,        // Increased for better quality
+    guidance_scale: 12,             // Increased for stronger prompt adherence
+    scheduler: 'K_EULER_ANCESTRAL',
+    guess_mode: false,
+    control_guidance_end: 1,
+    control_guidance_start: 0,
+    negative_prompt: 'shading, hatching, crosshatching, filled areas, gradients, complex details, thin lines, sketchy lines, multiple lines, double lines, texture, patterns, gray areas, shadows',
+    a_prompt: 'best quality, clean lines, simple design',
+    n_prompt: 'lowres, bad anatomy, worst quality, low quality, shading, complex',
+    control_scale: 1.2,             // Stronger edge control
+    strength: 0.8                   // Less deviation from original
+  },
+}),
     });
 
     const prediction = await replicateRes.json();
