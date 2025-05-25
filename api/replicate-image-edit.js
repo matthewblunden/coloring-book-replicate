@@ -9,22 +9,23 @@ module.exports.config = {
 };
 
 module.exports.default = async function handler(req, res) {
-  // CORS headers
+  // ✅ CORS headers
   res.setHeader('Access-Control-Allow-Origin', 'https://mattsplayground.com');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  // Preflight request
+  // ✅ Handle preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  // Only allow POST
+  // ✅ Only allow POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
+    // ✅ Parse uploaded file
     const form = new formidable.IncomingForm({ multiples: false });
     const { files } = await new Promise((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
@@ -42,6 +43,7 @@ module.exports.default = async function handler(req, res) {
     const buffer = await readFile(file.filepath);
     const base64Image = buffer.toString('base64');
 
+    // ✅ Send to Replicate
     const replicateRes = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
@@ -62,13 +64,20 @@ module.exports.default = async function handler(req, res) {
 
     if (!replicateRes.ok) {
       console.error('❌ Replicate API Error:', prediction);
-      return res.status(replicateRes.status).json({ error: 'Replicate request failed', details: prediction });
+      return res.status(replicateRes.status).json({
+        error: 'Replicate request failed',
+        details: prediction,
+      });
     }
 
+    // ✅ Success
     return res.status(200).json(prediction);
 
   } catch (err) {
     console.error('❌ Server error:', err);
-    return res.status(500).json({ error: 'Internal server error', details: err.message });
+    return res.status(500).json({
+      error: 'Internal server error',
+      details: err.message,
+    });
   }
 };
