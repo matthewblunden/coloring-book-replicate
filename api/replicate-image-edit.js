@@ -106,21 +106,26 @@ module.exports = async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-  version: "628e604a13cf63887dc8c5312a11602c1f5bdf472663e13c5a8b7889dff0d425",
+  // This model is specifically for creating line art
+  version: "435061a1b5a4c1e26740464bf786efdfa9cb3a3ac488595a2de23e143fdb0117",
   input: {
     image: `data:${mimeType};base64,${base64Image}`,
-    prompt: "clean coloring book outline, bold black lines only, simple drawing for children",
-    negative_prompt: "photo, realistic, complex, detailed, shading, gradients, colors",
+    prompt: "coloring book page, simple bold black outlines, clean lines, no shading, child-friendly",
+    negative_prompt: "realistic, photo, shadows, gradients, complex details, hatching, sketch",
     num_samples: 1,
-    image_resolution: 512,
-    scheduler: "K_EULER_ANCESTRAL",
-    num_inference_steps: 30,
-    guidance_scale: 15,
+    resolution: 512,
+    scheduler: "K_EULER",
+    num_inference_steps: 20,
+    guidance_scale: 7,
     seed: -1,
     eta: 0,
-    controlnet_conditioning_scale: 1.5,
-    control_guidance_start: 0,
-    control_guidance_end: 1
+    a_prompt: "best quality, sharp lines",
+    n_prompt: "lowres, bad anatomy, worst quality, low quality",
+    ddim_steps: 20,
+    strength: 0.8,
+    scale: 9,
+    low_threshold: 100,
+    high_threshold: 200
   }
 }),
     });
