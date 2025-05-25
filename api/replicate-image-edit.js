@@ -107,14 +107,20 @@ module.exports = async function handler(req, res) {
       },
      // This uses the QR code model which is good at creating clean black/white patterns
 body: JSON.stringify({
-  version: "9cdabf8f8a991351960c7ce2105de2909514b9b2d8da70c7a3f1c42f2db7fa1b",
+  version: 'aff48af9c68d162388d230a2ab003f68d2638d88307bdaf1c2f1ac95079c9613',
   input: {
     image: `data:${mimeType};base64,${base64Image}`,
-    prompt: "coloring book page, simple black outline",
-    qr_conditioning_scale: 2.0,
+    prompt: 'simple coloring book, bold black outline only, white background',
+    num_outputs: 1,
+    image_resolution: '512',
+    preprocessor: 'Lineart_Anime',  // Try this preprocessor specifically for cleaner lines
     num_inference_steps: 20,
-    guidance_scale: 10,
-    negative_prompt: "complex, realistic, detailed"
+    guidance_scale: 3,  // Lower guidance scale
+    scheduler: 'K_EULER',
+    guess_mode: true,  // This makes it ignore the prompt more and focus on edges
+    control_guidance_end: 1,
+    control_guidance_start: 0,
+    negative_prompt: 'complex, detailed, shading'
   }
 }),
     });
