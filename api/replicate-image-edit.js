@@ -86,11 +86,17 @@ module.exports = async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        version: 'cc2012c1d4ef86c83e4ac3b73e4ca85be047aa3d2914b12a2cc9d70de42031e0',
+        version: 'aff48af9c68d162388d230a2ab003f68d2638d88307bdaf1c2f1ac95079c9613',
         input: {
           image: `data:${mimeType};base64,${base64Image}`,
-          prompt: 'children\'s coloring book line art, bold uniform black outlines, no shading, white background',
-          scale: 9,
+          prompt: 'children coloring book page, simple line art, bold black outlines only, no shading, no colors, white background',
+          num_outputs: 1,
+          image_resolution: '512',
+          preprocessor: 'Canny',
+          num_inference_steps: 20,
+          guidance_scale: 7,
+          scheduler: 'DPMSolverMultistep',
+          guess_mode: false
         },
       }),
     });
