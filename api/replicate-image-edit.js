@@ -1,7 +1,6 @@
 // api/replicate-image-edit.js
 import formidable from 'formidable';
 import { readFile } from 'fs/promises';
-import fetch from 'node-fetch';
 
 export const config = {
   api: {
