@@ -1,6 +1,5 @@
-import { parse } from 'formidable';
+import formidable from 'formidable';
 import { readFile } from 'fs/promises';
-import fetch from 'node-fetch';
 
 export const config = {
   api: {
@@ -9,26 +8,19 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-  // ✅ CORS headers for production
-  res.setHeader('Access-Control-Allow-Origin', 'https://mattsplayground.com');
+  res.setHeader('Access-Control-Allow-Origin', 'https://mattsplayground.com'); // ✅ production domain
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  // ✅ Preflight request
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { files } = await new Promise((resolve, reject) => {
-      parse(req, {}, (err, fields, files) => {
-        if (err) reject(err);
-        else resolve({ fields, files });
-      });
-    });
+    const form = formidable({ multiples: false });
+    const [fields, files] = await form.parse(req);
+    const file = files.image;
 
-    const file = files?.image;
     if (!file) {
-      console.warn('⚠️ No image uploaded');
       return res.status(400).json({ error: 'No image file uploaded' });
     }
 
@@ -45,7 +37,7 @@ export default async function handler(req, res) {
         version: 'cc2012c1d4ef86c83e4ac3b73e4ca85be047aa3d2914b12a2cc9d70de42031e0',
         input: {
           image: `data:image/jpeg;base64,${base64Image}`,
-          prompt: `children's coloring book line art, bold uniform black outlines, no shading, white background`,
+          prompt: "children's coloring book line art, bold uniform black outlines, no shading, white background",
           scale: 9,
         },
       }),
@@ -55,10 +47,7 @@ export default async function handler(req, res) {
 
     if (!replicateRes.ok) {
       console.error('❌ Replicate error:', prediction);
-      return res.status(replicateRes.status).json({
-        error: 'Replicate request failed',
-        details: prediction,
-      });
+      return res.status(replicateRes.status).json({ error: 'Replicate request failed', details: prediction });
     }
 
     return res.status(200).json(prediction);
