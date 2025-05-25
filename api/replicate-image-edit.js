@@ -1,7 +1,7 @@
 // api/replicate-image-edit.js
-const formidable = require('formidable');
-const { readFile } = require('fs/promises');
-const fetch = require('node-fetch');
+import formidable from 'formidable';
+import { readFile } from 'fs/promises';
+import fetch from 'node-fetch';
 
 export const config = {
   api: {
@@ -29,31 +29,49 @@ export default async function handler(req, res) {
     // Parse the form data
     const form = formidable({ multiples: false });
     
-    const [fields, files] = await form.parse(req);
+    const { fields, files } = await new Promise((resolve, reject) => {
+      form.parse(req, (err, fields, files) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve({ fields, files });
+        }
+      });
+    });
     
-    console.log('📂 Files received:', files);
+    console.log('📂 Files structure:', JSON.stringify(files, null, 2));
     
-    // Get the first file from the image field
-    const file = files.image?.[0] || files.image;
+    // Get the image file (handle different possible structures)
+    let file = files.image;
+    
+    // If it's an array, take the first one
+    if (Array.isArray(file)) {
+      file = file[0];
+    }
     
     if (!file) {
       console.warn('⚠️ No image file uploaded');
       return res.status(400).json({ error: 'No image file uploaded' });
     }
 
-    console.log('📂 File details:', {
-      originalFilename: file.originalFilename,
-      mimetype: file.mimetype,
-      filepath: file.filepath,
-      size: file.size
-    });
+    console.log('📂 File object:', JSON.stringify(file, null, 2));
+
+    // Get the file path - formidable v3 uses 'filepath'
+    const filePath = file.filepath || file.path;
+    
+    if (!filePath) {
+      console.error('❌ No filepath found in:', file);
+      throw new Error('File path not found in uploaded file');
+    }
 
     // Read file and convert to base64
-    const buffer = await readFile(file.filepath);
+    const buffer = await readFile(filePath);
     const base64Image = buffer.toString('base64');
     
-    // Determine mime type for data URL
+    // Determine mime type
     const mimeType = file.mimetype || 'image/jpeg';
+
+    console.log('📤 Sending to Replicate...');
 
     // Call Replicate API
     const replicateRes = await fetch('https://api.replicate.com/v1/predictions', {
@@ -87,6 +105,7 @@ export default async function handler(req, res) {
     
   } catch (err) {
     console.error('❌ Server error:', err);
+    console.error('Stack trace:', err.stack);
     return res.status(500).json({ 
       error: 'Internal server error', 
       details: err.message 
