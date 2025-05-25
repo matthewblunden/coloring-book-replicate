@@ -1,0 +1,15 @@
+{
+  "name": "coloring-book-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "vercel build",
+    "start": "vercel start"
+  },
+  "dependencies": {
+    "formidable": "^3.5.0",
+    "node-fetch": "^3.3.2"
+  }
+}
