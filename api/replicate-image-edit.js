@@ -1,15 +1,9 @@
 // api/replicate-image-edit.js
-import formidable from 'formidable';
-import { readFile } from 'fs/promises';
-import fetch from 'node-fetch';
+const formidable = require('formidable');
+const fs = require('fs');
+const fetch = require('node-fetch');
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // ✅ CORS for production
   res.setHeader('Access-Control-Allow-Origin', 'https://mattsplayground.com');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -27,11 +21,12 @@ export default async function handler(req, res) {
 
   try {
     // Parse the form data
-    const form = formidable({ multiples: false });
+    const form = new formidable.IncomingForm();
     
     const { fields, files } = await new Promise((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
         if (err) {
+          console.error('Form parse error:', err);
           reject(err);
         } else {
           resolve({ fields, files });
@@ -39,9 +34,9 @@ export default async function handler(req, res) {
       });
     });
     
-    console.log('📂 Files structure:', JSON.stringify(files, null, 2));
+    console.log('📂 Files received:', Object.keys(files));
     
-    // Get the image file (handle different possible structures)
+    // Get the image file
     let file = files.image;
     
     // If it's an array, take the first one
@@ -54,22 +49,32 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No image file uploaded' });
     }
 
-    console.log('📂 File object:', JSON.stringify(file, null, 2));
+    console.log('📂 File properties:', {
+      hasFilepath: !!file.filepath,
+      hasPath: !!file.path,
+      properties: Object.keys(file)
+    });
 
-    // Get the file path - formidable v3 uses 'filepath'
+    // Get the file path
     const filePath = file.filepath || file.path;
     
     if (!filePath) {
-      console.error('❌ No filepath found in:', file);
+      console.error('❌ File object:', JSON.stringify(file, null, 2));
       throw new Error('File path not found in uploaded file');
     }
 
     // Read file and convert to base64
-    const buffer = await readFile(filePath);
+    const buffer = await new Promise((resolve, reject) => {
+      fs.readFile(filePath, (err, data) => {
+        if (err) reject(err);
+        else resolve(data);
+      });
+    });
+    
     const base64Image = buffer.toString('base64');
     
     // Determine mime type
-    const mimeType = file.mimetype || 'image/jpeg';
+    const mimeType = file.mimetype || file.type || 'image/jpeg';
 
     console.log('📤 Sending to Replicate...');
 
@@ -111,4 +116,10 @@ export default async function handler(req, res) {
       details: err.message 
     });
   }
-}
+};
+
+module.exports.config = {
+  api: {
+    bodyParser: false,
+  },
+};
